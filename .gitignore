@@ -1,0 +1,25 @@
+# Bí mật và cấu hình riêng (KHÔNG đưa lên GitHub)
+appsettings.Development.json
+appsettings.Production.json
+
+# Sản phẩm build / file nặng
+**/bin/
+**/obj/
+**/build/
+**/.dart_tool/
+**/.gradle/
+**/.idea/
+**/*.iml
+publish/
+apk/
+*.apk
+*.bak
+
+# Bản sao lưu cục bộ
+app_backup_before_ui/
+backup_truoc_*
+
+# Khác
+.DS_Store
+*.log
+__pycache__/

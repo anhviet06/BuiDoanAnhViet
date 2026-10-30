@@ -14,8 +14,13 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
   AuthSession? _session;
   String? _notice;
+  bool _pendingFacePrompt = false;
 
   AuthProvider(this._storage, this._service);
+
+  /// true ngay sau khi đăng nhập bằng mật khẩu + OTP (để AuthGate hỏi "Bật đăng nhập bằng khuôn mặt?"). Đọc xong thì gọi [consumeFacePrompt].
+  bool get pendingFacePrompt => _pendingFacePrompt;
+  void consumeFacePrompt() => _pendingFacePrompt = false;
 
   AuthStatus get status => _status;
   AuthSession? get session => _session;
@@ -59,6 +64,12 @@ class AuthProvider extends ChangeNotifier {
   /// Bước 2 (màn OTP): thành công thì lưu token và chuyển màn theo role.
   Future<void> verifyOtp(String username, String otp) async {
     final result = await _service.verifyOtp(username.trim(), otp.trim());
+    await acceptLogin(result, fromPassword: true);
+  }
+
+  /// Nhận kết quả đăng nhập (OTP hoặc khuôn mặt): lưu token, đặt phiên, chuyển màn theo role.
+  /// [fromPassword] = true khi vừa đăng nhập bằng mật khẩu + OTP -> sẽ hỏi bật đăng nhập bằng khuôn mặt.
+  Future<void> acceptLogin(VerifyResult result, {bool fromPassword = false}) async {
     final session = AuthSession.fromToken(result.token, fullName: result.fullName);
     if (session == null) {
       throw StateError('Token nhận về không hợp lệ');
@@ -67,6 +78,7 @@ class AuthProvider extends ChangeNotifier {
     await _storage.saveFullName(result.fullName);
     _session = session;
     _notice = null;
+    _pendingFacePrompt = fromPassword;
     _status = AuthStatus.authenticated;
     notifyListeners();
   }

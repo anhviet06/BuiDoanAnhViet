@@ -246,6 +246,6 @@ class LivenessEngine {
 }
 
 /// Hàm dựng khung xác thực khuôn mặt (camera trước + ML Kit). Tách ra để test thay bằng khung giả
-/// (camera/ML Kit chỉ chạy trên thiết bị). [onVerified] được gọi khi qua thử thách. Lỗi camera,
+/// (camera/ML Kit chỉ chạy trên thiết bị). [onVerified] được gọi khi qua thử thách; [onFailed] (tùy chọn) mỗi lần thử thách thất bại (hết giờ). Lỗi camera,
 /// hết giờ... do chính khung này hiển thị kèm nút Thử lại.
-typedef FaceLivenessBuilder = Widget Function(BuildContext context, {required VoidCallback onVerified});
+typedef FaceLivenessBuilder = Widget Function(BuildContext context, {required VoidCallback onVerified, VoidCallback? onFailed});

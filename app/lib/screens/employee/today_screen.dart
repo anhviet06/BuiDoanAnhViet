@@ -126,8 +126,15 @@ class _Header extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [AppColors.brandDeep, AppColors.brandMid], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).extension<BrandColors>()?.deep ?? AppColors.brandDeep,
+              Theme.of(context).extension<BrandColors>()?.mid ?? AppColors.brandMid,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
         child: Stack(
           children: [

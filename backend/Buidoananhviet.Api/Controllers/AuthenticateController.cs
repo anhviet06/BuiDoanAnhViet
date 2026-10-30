@@ -19,15 +19,18 @@ public class AuthenticateController : ControllerBase
 
     private readonly IUserRepository _userRepository;
     private readonly IEmailSender _emailSender;
+    private readonly IDeviceLoginService _deviceLogins;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthenticateController> _logger;
 
     public AuthenticateController(
         IUserRepository userRepository,
         IEmailSender emailSender,
+        IDeviceLoginService deviceLogins,
         IConfiguration configuration,
         ILogger<AuthenticateController> logger)
     {
+        _deviceLogins = deviceLogins;
         _userRepository = userRepository;
         _emailSender = emailSender;
         _configuration = configuration;
@@ -162,27 +165,93 @@ public class AuthenticateController : ControllerBase
             // OTP dùng một lần
             await ClearOtpAsync(user);
 
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            return Ok(new
-            {
-                success = true,
-                message = "Đăng nhập thành công",
-                token = GenerateToken(claims),
-                role = user.Role,
-                user = new { user.Id, user.Email, user.Username, user.FullName, user.Role }
-            });
+            return LoginSuccess(user, "Đăng nhập thành công");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "VerifyOtp lỗi");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    // Phản hồi đăng nhập thành công (dùng chung cho verify-otp và device-login): JWT chứa role + thông tin người dùng
+    private IActionResult LoginSuccess(User user, string message)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Role, user.Role),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        return Ok(new
+        {
+            success = true,
+            message,
+            token = GenerateToken(claims),
+            role = user.Role,
+            user = new { user.Id, user.Email, user.Username, user.FullName, user.Role }
+        });
+    }
+
+    // ===== Đăng nhập bằng thiết bị tin cậy (khuôn mặt) =====
+
+    // Cấp token cho thiết bị này (cần JWT: người dùng vừa đăng nhập bằng mật khẩu + OTP và chọn bật). Trả token thô một lần.
+    [Authorize]
+    [HttpPost("device-token")]
+    public async Task<IActionResult> IssueDeviceToken([FromBody] DeviceTokenRequest model)
+    {
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var (token, expiresAt) = await _deviceLogins.IssueAsync(User.GetUserId(), model.DeviceId);
+            return Ok(new { success = true, deviceToken = token, expiresAt });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "IssueDeviceToken lỗi");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    // Đăng nhập bằng token thiết bị + xác nhận người sống. Mọi lỗi token đều trả cùng một thông báo chung chung.
+    [HttpPost("device-login")]
+    public async Task<IActionResult> DeviceLogin([FromBody] DeviceLoginModel model)
+    {
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!model.FaceVerified)
+                return BadRequest(new { success = false, message = "Cần xác thực khuôn mặt trước khi đăng nhập" });
+
+            var user = await _deviceLogins.ValidateAsync(model.DeviceId, model.DeviceToken);
+            if (user == null)
+                return Unauthorized(new { success = false, message = "Không đăng nhập được bằng khuôn mặt. Hãy đăng nhập bằng mật khẩu và OTP." });
+
+            return LoginSuccess(user, "Đăng nhập thành công");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeviceLogin lỗi");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    // Thu hồi token thiết bị (tắt tính năng / đổi tài khoản). Người giữ token tự thu hồi nên không cần JWT.
+    [HttpDelete("device-token")]
+    public async Task<IActionResult> RevokeDeviceToken([FromBody] DeviceTokenRevokeModel model)
+    {
+        try
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            await _deviceLogins.RevokeAsync(model.DeviceId, model.DeviceToken);
+            return NoContent(); // luôn 204: không tiết lộ token có tồn tại hay không
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RevokeDeviceToken lỗi");
             return StatusCode(500, "Internal server error");
         }
     }

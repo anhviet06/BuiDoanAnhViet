@@ -31,6 +31,7 @@ builder.Services.AddSingleton<ITimeService, TimeService>();
 builder.Services.AddScoped<ICompanySettingsService, CompanySettingsService>();
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IDeviceLoginService, DeviceLoginService>();
 
 // JWT: secret lấy từ cấu hình/biến môi trường
 var jwtKey = builder.Configuration["Jwt:Key"];

@@ -13,12 +13,14 @@ import 'face_widgets.dart';
 /// Khung xác thực khuôn mặt thật (liveness) bằng camera TRƯỚC + ML Kit chạy trên máy (ảnh không gửi đi đâu).
 /// Thử thách: thấy mặt bình thường -> 2 hành động ngẫu nhiên (cười / quay trái / quay phải).
 /// Lỗi camera hoặc hết giờ thì hiện thông báo + nút Thử lại. Giải phóng camera khi rời màn.
-Widget buildFaceLiveness(BuildContext context, {required VoidCallback onVerified}) => FaceLivenessView(onVerified: onVerified);
+Widget buildFaceLiveness(BuildContext context, {required VoidCallback onVerified, VoidCallback? onFailed}) =>
+    FaceLivenessView(onVerified: onVerified, onFailed: onFailed);
 
 class FaceLivenessView extends StatefulWidget {
   final VoidCallback onVerified;
+  final VoidCallback? onFailed;
 
-  const FaceLivenessView({super.key, required this.onVerified});
+  const FaceLivenessView({super.key, required this.onVerified, this.onFailed});
 
   @override
   State<FaceLivenessView> createState() => _FaceLivenessViewState();
@@ -36,6 +38,7 @@ class _FaceLivenessViewState extends State<FaceLivenessView> {
   bool _processing = false;
   bool _disposed = false;
   bool _notified = false;
+  bool _failedNotified = false;
 
   static const _orientations = {
     DeviceOrientation.portraitUp: 0,
@@ -209,6 +212,10 @@ class _FaceLivenessViewState extends State<FaceLivenessView> {
     if (!mounted || _disposed) return;
     setState(() => _state = state);
     if (state.phase == LivenessPhase.failed) {
+      if (!_failedNotified) {
+        _failedNotified = true;
+        widget.onFailed?.call();
+      }
       _timer?.cancel();
       _controller?.stopImageStream().catchError((_) {});
     } else if (state.phase == LivenessPhase.success && !_notified) {
@@ -223,6 +230,7 @@ class _FaceLivenessViewState extends State<FaceLivenessView> {
   }
 
   void _retry() {
+    _failedNotified = false;
     final controller = _controller;
     if (_error != null || controller == null || !controller.value.isInitialized) {
       _start();

@@ -1,0 +1,87 @@
+BÀI KIỂM TRA MÔN HỌC (40%) - ĐỀ 2: ỨNG DỤNG CHẤM CÔNG CHO NHÂN VIÊN
+Họ tên: Bùi Đoàn Anh Việt
+Tên project: buidoananhviet (Flutter: buidoananhviet; Backend: Buidoananhviet.Api)
+
+Tự đánh giá :
+
+Điểm tự chấm: 8,5 / 10.
+Lý do trừ điểm: quét QR bằng camera chưa hoàn hảo khi demo (phải nhập mã tay), khuôn mặt mới là xác thực người thật chứ chưa nhận diện danh tính, chưa có OAuth/SMS OTP.
+Các phần còn lại (đăng ký, đăng nhập OTP, phân quyền, CRUD đầy đủ, vị trí, tính năng chống gian lận,
+giao diện, deploy) đều chạy được.
+
+*CÁC CHỨC NĂNG ĐÃ LÀM ĐƯỢC 
+
+1. ĐĂNG KÝ TÀI KHOẢN QUA EMAIL
+   - Nhập họ tên, email, mật khẩu, tên đăng nhập (tùy chọn).
+   - Đăng ký xong hệ thống gửi mã OTP về email để xác thực, nhập OTP đúng mới vào app.
+   - Tài khoản đăng ký luôn là nhân viên.
+   - (Chưa làm đăng ký bằng bên thứ ba OAuth 2.0; đề cho phép chọn một trong hai.)
+
+2. ĐĂNG NHẬP: TÊN ĐĂNG NHẬP + MẬT KHẨU + OTP
+   - Bước 1: email hoặc tên đăng nhập + mật khẩu. Bước 2: nhập OTP 6 số gửi qua Email OTP.
+   - OTP hết hạn sau 5 phút, dùng một lần, nhập sai 5 lần thì hủy, có nút gửi lại mã.
+   - Phiên đăng nhập dùng JWT, tự đăng xuất khi hết hạn.
+
+3. PHÂN QUYỀN NGƯỜI DÙNG
+   - Quản trị viên (admin): vào trang quản trị gồm 5 mục: Nhân viên, Ca làm, Nghỉ phép,
+     Cấu hình, Báo cáo.
+   - Nhân viên: vào Dashboard riêng gồm 4 mục: Hôm nay, Lịch sử, Nghỉ phép, Hồ sơ.
+   - Phân quyền được kiểm tra ở cả backend (API của admin trả 403 với nhân viên).
+
+4. CÁC CHỨC NĂNG CRUD
+   - Nhân viên (admin): thêm, xem, sửa, xóa, khóa/mở khóa, đặt lại mật khẩu.
+   - Ca làm (admin): thêm, xem, sửa, xóa, đổi mã QR. Có sẵn 5 ca: Ca 1, Ca 2, Ca 3 (18:00-24:00),
+     Ca gãy sáng, Ca gãy chiều, mỗi ca có mã QR cố định.
+   - Nghỉ phép: nhân viên tạo, xem, sửa, xóa đơn chờ duyệt; admin duyệt hoặc từ chối kèm ghi chú.
+   - Chấm công: vào ca, ra ca, xem lịch sử; admin xem toàn bộ, gỡ cờ nghi ngờ, đóng ca quên check-out.
+   - Cấu hình công ty (admin): vị trí, bán kính cho phép, mức phạt đi trễ mỗi phút.
+   - Hồ sơ cá nhân: sửa họ tên, đổi mật khẩu.
+   - Báo cáo tháng (admin) và lương tạm tính (nhân viên) kèm biểu đồ.
+
+5. BA CHỨC NĂNG CHỌN :
+   (e) Nhận diện QR: quét mã QR của ca bằng camera (thư viện mobile_scanner), có khung ngắm;
+       nếu camera lỗi hoặc bị từ chối quyền thì tự chuyển sang nhập mã tay. Admin xem và
+       phóng to mã QR của từng ca.
+   (b) Vị trí: lấy tọa độ GPS lúc chấm công, server tính khoảng cách tới công ty (công thức
+       Haversine) và từ chối nếu vượt bán kính. Phát hiện vị trí giả (mock location).
+   (a) Khuôn mặt: xác thực "người thật" bằng camera trước và Google ML Kit chạy ngay trên máy:
+       thấy một khuôn mặt nhìn thẳng, rồi làm ngẫu nhiên 2 trong 3 động tác (cười, quay trái,
+       quay phải) trong 10 giây mỗi động tác. Ảnh không gửi lên server.
+
+6. TÍNH NĂNG MỚI (TỰ ĐỀ XUẤT): CHỐNG GIAN LẬN KHI CHẤM CÔNG
+   - Quy trình 3 bước: quét QR -> lấy vị trí GPS -> xác thực khuôn mặt.
+   - Đánh dấu "Nghi ngờ" khi: dùng vị trí giả; một thiết bị chấm công cho nhiều nhân viên trong
+     ngày; ra ca từ thiết bị khác. Admin xem và gỡ cờ.
+   - Không cho chấm 2 ca cùng lúc: đang trong một ca chưa check-out thì không vào được ca khác.
+   - Tự tính giờ làm, phạt đi trễ (theo phút, có thời gian ân hạn) và lương ca.
+   - Các ca có thể chồng giờ nhau; mã QR quyết định nhân viên chấm ca nào.
+
+7. GIAO DIỆN ĐẸP, DỄ DÙNG, CẢ NHÓM CHẠY ĐƯỢC
+   - Backend đã deploy công khai nên máy nào cài ứng dụng cũng chạy được, không cần chạy server riêng.
+   - Có hướng dẫn chạy trong README của từng thư mục.
+
+-KIỂM THỬ
+
+- Backend: 49 test tự động đạt.
+- Flutter: phân tích mã không có lỗi, 130 test tự động đạt.
+- Đã chạy thử thật trên máy ảo Android với backend đã deploy: đăng ký, nhận OTP qua email,
+  đăng nhập, phân quyền admin, chấm công vào ca bằng mã nhập tay, xác thực khuôn mặt bằng
+  webcam, ra ca bằng nút "Check-out ca này", xem báo cáo.
+
+-HẠN CHẾ VÀ NHỮNG ĐIỀU CHƯA HOÀN HẢO :
+
+- QUÉT QR BẰNG CAMERA CHƯA HOÀN HẢO TRONG BUỔI DEMO:
+  + Phần quét bằng camera (khung ngắm, đọc mã) đã được lập trình, nhưng khi thử trên máy ảo
+    mình chưa quét thành công một mã QR thật bằng camera; ảnh mã QR trên màn hình khó đưa
+    vào camera của máy ảo (máy ảo chỉ dùng webcam làm camera trước).
+  + Vì vậy khi demo, việc chấm công dùng "nhập mã tay" (mã in dưới mỗi QR) và đã chạy tốt.
+    Mình đã kiểm tra riêng rằng ảnh QR được tạo ra giải mã đúng nội dung bằng OpenCV, và nhập
+    mã tay cho kết quả chấm công đúng.
+  + Quét QR bằng camera sau trên điện thoại thật chưa được kiểm chứng.
+- Xác thực khuôn mặt hiện là "xác thực người thật" (cười, quay đầu), CHƯA nhận diện đúng người
+  (không so khớp khuôn mặt với hồ sơ) và không dùng để đăng nhập.
+- Chưa có đăng ký/đăng nhập bằng OAuth 2.0 và chưa có SMS OTP (chỉ Email OTP).
+- Máy chủ deploy có thể "ngủ" khi lâu không dùng, lần mở đầu tiên có thể chậm khoảng 10-30 giây.
+
+
+

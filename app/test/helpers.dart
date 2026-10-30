@@ -16,8 +16,18 @@ class FakeTokenStorage implements TokenStorage {
   String? token;
   String? fullName;
   String? deviceId;
+  final Map<String, String> values = {};
 
   FakeTokenStorage({this.token, this.fullName, this.deviceId});
+
+  @override
+  Future<String?> readValue(String key) async => values[key];
+
+  @override
+  Future<void> writeValue(String key, String value) async => values[key] = value;
+
+  @override
+  Future<void> deleteValue(String key) async => values.remove(key);
 
   @override
   Future<String?> readToken() async => token;
@@ -120,9 +130,12 @@ class FakeLocationService implements LocationService {
 class FakeFaceLiveness {
   int builds = 0;
 
-  Widget build(BuildContext context, {required VoidCallback onVerified}) {
+  Widget build(BuildContext context, {required VoidCallback onVerified, VoidCallback? onFailed}) {
     builds++;
-    return Center(child: TextButton(key: const Key('fake_face_ok'), onPressed: onVerified, child: const Text('Xác thực thử')));
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      TextButton(key: const Key('fake_face_ok'), onPressed: onVerified, child: const Text('Xác thực thử')),
+      if (onFailed != null) TextButton(key: const Key('fake_face_fail'), onPressed: onFailed, child: const Text('Thất bại thử')),
+    ]);
   }
 }
 

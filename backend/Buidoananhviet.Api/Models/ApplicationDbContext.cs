@@ -10,6 +10,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Leave> Leaves => Set<Leave>();
     public DbSet<Setting> Settings => Set<Setting>();
+    public DbSet<DeviceLogin> DeviceLogins => Set<DeviceLogin>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -19,8 +20,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             e.HasIndex(x => x.Email).IsUnique();
             e.HasIndex(x => x.Username).IsUnique();
             e.Property(x => x.HourlyRate).HasPrecision(18, 2);
+            e.Property(x => x.Phone).HasMaxLength(20);
+            e.Property(x => x.Address).HasMaxLength(200);
+            e.Property(x => x.DateOfBirth).HasColumnType("date");
         });
         b.Entity<Shift>().HasIndex(x => x.QrToken).IsUnique();
+        b.Entity<DeviceLogin>(e =>
+        {
+            e.Property(x => x.DeviceId).HasMaxLength(200);
+            e.Property(x => x.TokenHash).HasMaxLength(64);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.DeviceId });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
         b.Entity<Setting>().HasIndex(x => x.Key).IsUnique();
         b.Entity<Attendance>(e =>
         {
@@ -48,5 +60,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         b.Entity<Leave>().Property(x => x.CreatedAt).HasConversion(utc);
         b.Entity<Attendance>().Property(x => x.CheckInAt).HasConversion(utc);
         b.Entity<Attendance>().Property(x => x.CheckOutAt).HasConversion(utcNullable);
+        b.Entity<DeviceLogin>().Property(x => x.CreatedAt).HasConversion(utc);
+        b.Entity<DeviceLogin>().Property(x => x.ExpiresAt).HasConversion(utc);
+        b.Entity<DeviceLogin>().Property(x => x.LastUsedAt).HasConversion(utcNullable);
+        b.Entity<DeviceLogin>().Property(x => x.RevokedAt).HasConversion(utcNullable);
     }
 }

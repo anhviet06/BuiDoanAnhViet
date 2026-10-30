@@ -1,3 +1,4 @@
+import '../employee/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -71,6 +72,7 @@ class _AdminShellState extends State<_AdminShell> {
             ),
             onSelected: (v) {
               if (v == 'logout') auth.logout();
+              if (v == 'prefs') Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PersonalSettingsScreen()));
             },
             itemBuilder: (_) => [
               PopupMenuItem<String>(
@@ -84,6 +86,10 @@ class _AdminShellState extends State<_AdminShell> {
                 ),
               ),
               const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'prefs',
+                child: ListTile(leading: Icon(Icons.tune_rounded), title: Text('Cài đặt cá nhân'), contentPadding: EdgeInsets.zero),
+              ),
               const PopupMenuItem<String>(
                 value: 'logout',
                 child: ListTile(leading: Icon(Icons.logout_rounded), title: Text('Đăng xuất'), contentPadding: EdgeInsets.zero),

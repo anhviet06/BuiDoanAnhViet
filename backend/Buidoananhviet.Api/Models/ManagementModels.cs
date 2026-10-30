@@ -62,11 +62,18 @@ public class ChangePasswordModel
     public string NewPassword { get; set; } = string.Empty;
 }
 
-// Nhân viên tự sửa hồ sơ của mình
+// Người dùng tự sửa hồ sơ của mình. Mọi trường đều tùy chọn: không gửi = giữ nguyên, chuỗi rỗng = xóa
+// (riêng họ tên không được xóa). Kiểm tra hợp lệ ở ProfileRules.
 public class ProfileUpdateModel
 {
-    [Required]
-    public string FullName { get; set; } = string.Empty;
+    public string? FullName { get; set; }
+
+    public string? Phone { get; set; }
+
+    // "yyyy-MM-dd"
+    public string? DateOfBirth { get; set; }
+
+    public string? Address { get; set; }
 }
 
 public class ShiftModel

@@ -14,15 +14,21 @@ public class UsersController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IAttendanceRepository _attendanceRepository;
+    private readonly ITimeService _time;
+    private readonly IDeviceLoginService _deviceLogins;
     private readonly ILogger<UsersController> _logger;
 
     public UsersController(
         IUserRepository userRepository,
         IAttendanceRepository attendanceRepository,
+        ITimeService time,
+        IDeviceLoginService deviceLogins,
         ILogger<UsersController> logger)
     {
+        _deviceLogins = deviceLogins;
         _userRepository = userRepository;
         _attendanceRepository = attendanceRepository;
+        _time = time;
         _logger = logger;
     }
 
@@ -140,6 +146,7 @@ public class UsersController : ControllerBase
 
             user.IsLocked = model.IsLocked;
             await _userRepository.UpdateUserAsync(user);
+            if (model.IsLocked) await _deviceLogins.RevokeAllAsync(id);     // khóa tài khoản: mọi thiết bị phải đăng nhập lại
             return NoContent();
         }
         catch (Exception ex)
@@ -162,6 +169,7 @@ public class UsersController : ControllerBase
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
             await _userRepository.UpdateUserAsync(user);
+            await _deviceLogins.RevokeAllAsync(id);                          // đặt lại mật khẩu: thu hồi token thiết bị
             return NoContent();
         }
         catch (Exception ex)
@@ -224,7 +232,9 @@ public class UsersController : ControllerBase
             if (user == null)
                 return NotFound();
 
-            user.FullName = model.FullName.Trim();
+            var error = ProfileRules.Apply(user, model, _time.LocalNow);
+            if (error != null)
+                return Fail(400, error);
             await _userRepository.UpdateUserAsync(user);
             return NoContent();
         }
@@ -249,6 +259,7 @@ public class UsersController : ControllerBase
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
             await _userRepository.UpdateUserAsync(user);
+            await _deviceLogins.RevokeAllAsync(user.Id);                     // đổi mật khẩu: thu hồi token thiết bị
             return Ok(new { success = true, message = "Đổi mật khẩu thành công" });
         }
         catch (Exception ex)

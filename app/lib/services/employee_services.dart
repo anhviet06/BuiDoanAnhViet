@@ -54,6 +54,14 @@ class ProfileService {
 
   Future<void> updateName(String fullName) => _api.put('/api/Users/me', data: {'fullName': fullName});
 
+  /// Cập nhật hồ sơ. Chuỗi rỗng = xóa (SĐT, ngày sinh "yyyy-MM-dd", địa chỉ); null = không gửi (giữ nguyên).
+  Future<void> updateProfile({String? fullName, String? phone, String? dateOfBirth, String? address}) => _api.put('/api/Users/me', data: {
+        'fullName': ?fullName,
+        'phone': ?phone,
+        'dateOfBirth': ?dateOfBirth,
+        'address': ?address,
+      });
+
   /// Ném ApiException 400 nếu mật khẩu hiện tại sai.
   Future<void> changePassword({required String currentPassword, required String newPassword}) =>
       _api.post('/api/Users/change-password', data: {'currentPassword': currentPassword, 'newPassword': newPassword});

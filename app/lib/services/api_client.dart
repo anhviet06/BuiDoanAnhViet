@@ -53,7 +53,7 @@ class ApiClient {
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) => _send('GET', path, query: query);
   Future<dynamic> post(String path, {Object? data}) => _send('POST', path, data: data);
   Future<dynamic> put(String path, {Object? data}) => _send('PUT', path, data: data);
-  Future<dynamic> delete(String path) => _send('DELETE', path);
+  Future<dynamic> delete(String path, {Object? data}) => _send('DELETE', path, data: data);
 
   Future<dynamic> _send(String method, String path, {Object? data, Map<String, dynamic>? query}) async {
     try {

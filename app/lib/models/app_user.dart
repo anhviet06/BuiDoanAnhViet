@@ -8,6 +8,9 @@ class AppUser {
   final double hourlyRate;
   final bool isLocked;
   final DateTime? createdAt;
+  final String? phone;
+  final DateTime? dateOfBirth; // chỉ phần ngày
+  final String? address;
 
   const AppUser({
     required this.id,
@@ -18,6 +21,9 @@ class AppUser {
     required this.hourlyRate,
     required this.isLocked,
     this.createdAt,
+    this.phone,
+    this.dateOfBirth,
+    this.address,
   });
 
   bool get isAdmin => role == 'admin';
@@ -31,5 +37,10 @@ class AppUser {
         hourlyRate: ((json['hourlyRate'] ?? 0) as num).toDouble(),
         isLocked: (json['isLocked'] ?? false) as bool,
         createdAt: json['createdAt'] == null ? null : DateTime.tryParse(json['createdAt'] as String),
+        phone: _nonEmpty(json['phone']),
+        dateOfBirth: json['dateOfBirth'] == null ? null : DateTime.tryParse(json['dateOfBirth'] as String),
+        address: _nonEmpty(json['address']),
       );
+
+  static String? _nonEmpty(Object? v) => (v is String && v.trim().isNotEmpty) ? v : null;
 }

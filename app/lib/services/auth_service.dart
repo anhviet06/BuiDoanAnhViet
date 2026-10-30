@@ -51,4 +51,21 @@ class AuthService {
     final user = data['user'] as Map<String, dynamic>?;
     return VerifyResult(data['token'] as String, (user?['fullName'] ?? '') as String);
   }
+
+  /// Xin token đăng nhập theo thiết bị (cần đã đăng nhập). Trả token thô, server chỉ lưu bản băm.
+  Future<String> issueDeviceToken(String deviceId) async {
+    final data = await _api.post('/api/Authenticate/device-token', data: {'deviceId': deviceId});
+    return data['deviceToken'] as String;
+  }
+
+  /// Đăng nhập bằng token thiết bị sau khi người dùng qua bước xác nhận người sống (faceVerified luôn true ở đây).
+  Future<VerifyResult> deviceLogin(String deviceId, String deviceToken) async {
+    final data = await _api.post('/api/Authenticate/device-login', data: {'deviceId': deviceId, 'deviceToken': deviceToken, 'faceVerified': true});
+    final user = data['user'] as Map<String, dynamic>?;
+    return VerifyResult(data['token'] as String, (user?['fullName'] ?? '') as String);
+  }
+
+  /// Thu hồi token thiết bị trên server (tắt tính năng / đổi tài khoản).
+  Future<void> revokeDeviceToken(String deviceId, String deviceToken) =>
+      _api.delete('/api/Authenticate/device-token', data: {'deviceId': deviceId, 'deviceToken': deviceToken});
 }

@@ -40,6 +40,65 @@ class AppColors {
   static const Color brandLight = Color(0xFF3B82F6);
 }
 
+/// Một màu chủ đạo (accent) cho người dùng chọn. [light]/[dark] là màu primary ở chế độ sáng/tối;
+/// [deep]/[mid] là cặp màu gradient thẻ chào ở tab Hôm nay. Mục đầu tiên là mặc định (xanh dương).
+class AppAccent {
+  final String name;
+  final Color light;
+  final Color dark;
+  final Color deep;
+  final Color mid;
+
+  const AppAccent(this.name, this.light, this.dark, this.deep, this.mid);
+}
+
+/// Một tông nền cho người dùng chọn (nền trang). Thẻ/ô nhập giữ màu cố định. Mục đầu tiên là mặc định.
+class AppBackground {
+  final String name;
+  final Color light;
+  final Color dark;
+
+  const AppBackground(this.name, this.light, this.dark);
+}
+
+/// Bảng màu cố định (đã kiểm tra tương phản bằng test): 6 màu chủ đạo, 5 tông nền.
+class AppPalettes {
+  static const List<AppAccent> accents = [
+    AppAccent('Xanh dương', AppColors.primaryLight, AppColors.primaryDark, AppColors.brandDeep, AppColors.brandMid),
+    AppAccent('Xanh lá', Color(0xFF15803D), Color(0xFF4ADE80), Color(0xFF166534), Color(0xFF15803D)),
+    AppAccent('Tím', Color(0xFF7C3AED), Color(0xFFA78BFA), Color(0xFF5B21B6), Color(0xFF7C3AED)),
+    AppAccent('Cam', Color(0xFFC2410C), Color(0xFFFB923C), Color(0xFF9A3412), Color(0xFFC2410C)),
+    AppAccent('Hồng', Color(0xFFBE185D), Color(0xFFF472B6), Color(0xFF9D174D), Color(0xFFBE185D)),
+    AppAccent('Xanh ngọc', Color(0xFF0F766E), Color(0xFF2DD4BF), Color(0xFF115E59), Color(0xFF0F766E)),
+  ];
+
+  static const List<AppBackground> backgrounds = [
+    AppBackground('Mặc định', AppColors.bgLight, AppColors.bgDark),
+    AppBackground('Kem', Color(0xFFFDFAF4), Color(0xFF000000)),
+    AppBackground('Xanh nhạt', Color(0xFFF5FAFF), Color(0xFF0A1628)),
+    AppBackground('Xanh lá nhạt', Color(0xFFF5FBF8), Color(0xFF08150E)),
+    AppBackground('Hồng nhạt', Color(0xFFFEF7FA), Color(0xFF120B1F)),
+  ];
+
+  static AppAccent accent(int i) => accents[i.clamp(0, accents.length - 1)];
+  static AppBackground background(int i) => backgrounds[i.clamp(0, backgrounds.length - 1)];
+}
+
+/// Màu thương hiệu của thẻ chào (gradient) theo màu chủ đạo đã chọn.
+class BrandColors extends ThemeExtension<BrandColors> {
+  final Color deep;
+  final Color mid;
+
+  const BrandColors({required this.deep, required this.mid});
+
+  @override
+  BrandColors copyWith({Color? deep, Color? mid}) => BrandColors(deep: deep ?? this.deep, mid: mid ?? this.mid);
+
+  @override
+  BrandColors lerp(ThemeExtension<BrandColors>? other, double t) =>
+      other is BrandColors ? BrandColors(deep: Color.lerp(deep, other.deep, t)!, mid: Color.lerp(mid, other.mid, t)!) : this;
+}
+
 /// Kiểu chữ bổ sung.
 class AppTypography {
   static const String family = 'BeVietnamPro';
@@ -63,16 +122,35 @@ class AppTypography {
 class AppTheme {
   static const Color seed = AppColors.primaryLight;
 
-  static ThemeData get light => _build(Brightness.light);
-  static ThemeData get dark => _build(Brightness.dark);
+  static ThemeData get light => build(Brightness.light);
+  static ThemeData get dark => build(Brightness.dark);
 
-  static ThemeData _build(Brightness brightness) {
+  /// Dựng theme theo màu chủ đạo ([accent]) và tông nền ([background]) người dùng chọn.
+  /// Mặc định (0, 0) cho giao diện GIỐNG HỆT bản gốc.
+  static ThemeData build(Brightness brightness, {int accent = 0, int background = 0}) =>
+      _build(brightness, AppPalettes.accent(accent), AppPalettes.background(background), accent <= 0);
+
+  /// Màu chữ trên nền [bg]: trắng hoặc gần đen, chọn cái có tương phản cao hơn.
+  static Color onColor(Color bg) {
+    const dark = Color(0xFF0B1220);
+    double ratio(Color a, Color b) {
+      final la = a.computeLuminance(), lb = b.computeLuminance();
+      return ((la > lb ? la : lb) + 0.05) / ((la > lb ? lb : la) + 0.05);
+    }
+
+    return ratio(bg, Colors.white) >= ratio(bg, dark) ? Colors.white : dark;
+  }
+
+  static ThemeData _build(Brightness brightness, AppAccent accentDef, AppBackground bgDef, bool isDefaultAccent) {
     final dark = brightness == Brightness.dark;
-    final base = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    final primary = dark ? accentDef.dark : accentDef.light;
+    final bg = dark ? bgDef.dark : bgDef.light;
+    final base = ColorScheme.fromSeed(seedColor: isDefaultAccent ? seed : accentDef.light, brightness: brightness);
     final scheme = base.copyWith(
-      primary: dark ? AppColors.primaryDark : AppColors.primaryLight,
-      surface: dark ? AppColors.bgDark : AppColors.bgLight,
-      surfaceContainerLowest: dark ? AppColors.bgDark : AppColors.bgLight,
+      primary: primary,
+      onPrimary: isDefaultAccent ? base.onPrimary : onColor(primary),
+      surface: bg,
+      surfaceContainerLowest: bg,
       surfaceContainerLow: dark ? AppColors.cardDark : AppColors.cardLight,
       surfaceContainer: dark ? AppColors.cardDark : AppColors.cardLight,
       surfaceContainerHighest: dark ? AppColors.fieldDark : AppColors.fieldLight,
@@ -97,6 +175,7 @@ class AppTheme {
       fontFamily: AppTypography.family,
       colorScheme: scheme,
       textTheme: text,
+      extensions: [BrandColors(deep: accentDef.deep, mid: accentDef.mid)],
       scaffoldBackgroundColor: scheme.surface,
       // Chuyển trang mờ dần nhẹ nhàng, giống nhau trên mọi nền tảng
       pageTransitionsTheme: PageTransitionsTheme(

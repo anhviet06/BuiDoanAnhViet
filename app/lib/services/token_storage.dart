@@ -10,6 +10,11 @@ abstract class TokenStorage {
   Future<String?> readDeviceId();
   Future<void> saveDeviceId(String deviceId);
 
+  /// Lưu/đọc/xóa một giá trị chuỗi theo khóa tùy ý (cài đặt cá nhân, token thiết bị...). `clear()` KHÔNG xóa các khóa này.
+  Future<String?> readValue(String key);
+  Future<void> writeValue(String key, String value);
+  Future<void> deleteValue(String key);
+
   /// Xóa token + họ tên (giữ lại mã thiết bị).
   Future<void> clear();
 }
@@ -41,6 +46,15 @@ class SecureTokenStorage implements TokenStorage {
 
   @override
   Future<void> saveDeviceId(String deviceId) => _storage.write(key: _deviceKey, value: deviceId);
+
+  @override
+  Future<String?> readValue(String key) => _storage.read(key: key);
+
+  @override
+  Future<void> writeValue(String key, String value) => _storage.write(key: key, value: value);
+
+  @override
+  Future<void> deleteValue(String key) => _storage.delete(key: key);
 
   @override
   Future<void> clear() async {

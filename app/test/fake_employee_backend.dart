@@ -118,7 +118,14 @@ class FakeEmployeeBackend {
       case 'Users':
         if (seg[2] == 'me') {
           if (o.method == 'GET') return (status: 200, body: me);
-          me['fullName'] = body['fullName'];
+          // giống server: không gửi = giữ nguyên, chuỗi rỗng = xóa (họ tên không được rỗng)
+          if (body.containsKey('fullName')) {
+            if ((body['fullName'] as String).trim().isEmpty) return (status: 400, body: {'success': false, 'message': 'Họ và tên không được để trống'});
+            me['fullName'] = body['fullName'];
+          }
+          for (final k in ['phone', 'dateOfBirth', 'address']) {
+            if (body.containsKey(k)) me[k] = (body[k] as String).isEmpty ? null : (k == 'dateOfBirth' ? '${body[k]}T00:00:00' : body[k]);
+          }
           return ok;
         }
         if (seg[2] == 'change-password') {

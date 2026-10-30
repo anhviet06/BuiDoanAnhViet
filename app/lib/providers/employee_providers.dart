@@ -115,6 +115,12 @@ class ProfileProvider extends LoadableNotifier {
     notifyListeners();
   }
 
+  Future<void> updateProfile({String? fullName, String? phone, String? dateOfBirth, String? address}) async {
+    await _profile.updateProfile(fullName: fullName, phone: phone, dateOfBirth: dateOfBirth, address: address);
+    user = await _profile.me();
+    notifyListeners();
+  }
+
   Future<void> changePassword({required String currentPassword, required String newPassword}) =>
       _profile.changePassword(currentPassword: currentPassword, newPassword: newPassword);
 }

@@ -9,6 +9,8 @@ import '../../widgets/common_widgets.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/ui_kit.dart';
 import 'change_password_screen.dart';
+import 'profile_edit_screen.dart';
+import 'settings_screen.dart';
 
 /// Tab Hồ sơ: thông tin cá nhân, lương tạm tính tháng này, sửa họ tên, đổi mật khẩu, đăng xuất.
 class ProfileScreen extends StatelessWidget {
@@ -111,6 +113,14 @@ class ProfileScreen extends StatelessWidget {
                       style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                     Text('@${user.username}', style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                    if (user.phone != null || user.dateOfBirth != null || user.address != null) ...[
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
+                      if (user.phone != null) ReceiptRow(label: 'Số điện thoại', value: user.phone!),
+                      if (user.dateOfBirth != null) ReceiptRow(label: 'Ngày sinh', value: Fmt.date(user.dateOfBirth!)),
+                      if (user.address != null) ReceiptRow(label: 'Địa chỉ', value: user.address!),
+                    ],
                     const SizedBox(height: 8),
                     TextButton.icon(
                       key: const Key('profile_edit_name'),
@@ -165,6 +175,22 @@ class ProfileScreen extends StatelessWidget {
                     title: const Text('Đổi mật khẩu', style: TextStyle(fontWeight: FontWeight.w600)),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen())),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    key: const Key('profile_edit'),
+                    leading: IconCircle(icon: Icons.edit_note_rounded, color: scheme.primary, size: 36),
+                    title: const Text('Sửa hồ sơ', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileEditScreen(user: user))),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    key: const Key('profile_settings'),
+                    leading: IconCircle(icon: Icons.tune_rounded, color: scheme.primary, size: 36),
+                    title: const Text('Cài đặt', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const PersonalSettingsScreen())),
                   ),
                   const Divider(height: 1),
                   ListTile(

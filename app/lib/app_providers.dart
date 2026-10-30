@@ -2,6 +2,9 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import 'providers/auth_provider.dart';
+import 'providers/face_login_provider.dart';
+import 'services/auth_service.dart';
+import 'providers/settings_provider.dart';
 import 'services/admin_services.dart';
 import 'services/api_client.dart';
 import 'services/device_id_service.dart';
@@ -24,6 +27,10 @@ List<SingleChildWidget> buildAppProviders({
     [
       Provider<ApiClient>.value(value: api),
       ChangeNotifierProvider<AuthProvider>.value(value: auth),
+      ChangeNotifierProvider<SettingsProvider>.value(value: SettingsProvider(api.storage)..bindAuth(auth)),
+      ChangeNotifierProvider<FaceLoginProvider>.value(
+        value: FaceLoginProvider(api.storage, AuthService(api), auth, DeviceIdService(api.storage))..ensureLoaded(),
+      ),
       Provider<LocationService>.value(value: location ?? GeolocatorLocationService()),
       Provider<FaceLivenessBuilder>.value(value: faceLiveness ?? buildFaceLiveness),
       Provider<QrScannerBuilder>.value(value: qrScanner ?? buildMobileScanner),

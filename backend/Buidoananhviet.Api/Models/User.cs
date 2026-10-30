@@ -19,6 +19,11 @@ public class User
     public bool IsLocked { get; set; }            // Khóa/mở tài khoản
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Hồ sơ cá nhân (người dùng tự cập nhật, tùy chọn)
+    public string? Phone { get; set; }            // SĐT Việt Nam, dạng 0xxxxxxxxx
+    public DateTime? DateOfBirth { get; set; }    // chỉ lấy phần ngày
+    public string? Address { get; set; }          // <= 200 ký tự
+
     // OTP đăng nhập bước 2 (chỉ lưu hash, không trả ra JSON)
     [System.Text.Json.Serialization.JsonIgnore]
     public string? OtpHash { get; set; }
